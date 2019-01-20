@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<hooks>
+	<hooktype type="other_usergroup_display">
+		<hook>other_usergroup_display_start</hook>
+		<hook>other_usergroup_display_complete</hook>
+	</hooktype>
+</hooks>

@@ -1,0 +1,3 @@
+UPLOAD the contents of the /upload directory to your forum root.
+
+Import .XML, allow override if upgrade from an old version.

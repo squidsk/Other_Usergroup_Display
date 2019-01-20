@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<product productid="other_usergroup_display" active="1">
+	<title>Other Usergroup Display</title>
+	<description>Display Other Usergroups in Postbit</description>
+	<version>1.0</version>
+	<url>http://www.vbulletin.org/forum/showthread.php?t=295848</url>
+	<versioncheckurl><![CDATA[http://www.vbulletin.org/forum/misc.php?do=productcheck&pid=other_usergroup_display]]></versioncheckurl>
+	<dependencies>
+	</dependencies>
+	<codes>
+	</codes>
+	<templates>
+		<template name="other_usergroup_display.css" templatetype="template" date="1361224156" username="Squid" version="1.0"><![CDATA[.rankinfo > span:after {
+    content: " \2022 ";
+}
+
+.rankinfo > span:last-child:after {
+    content: "";
+}]]></template>
+		<template name="postbit_other_usergroup_display" templatetype="template" date="1362595867" username="Squid" version="1.0"><![CDATA[<vb:if condition="$other_usergroup_info">
+<div class="rankinfo<vb:if condition="!$postrank"> nobadge</vb:if>">
+<vb:each from="other_usergroup_info" value="groupinfo">
+    <span title="{vb:raw groupinfo.description}">{vb:raw groupinfo.open_tag}{vb:raw groupinfo.title}{vb:raw groupinfo.close_tag}</span>
+</vb:each>
+</div>
+</vb:if>]]></template>
+	</templates>
+	<stylevardfns>
+	</stylevardfns>
+	<stylevars>
+	</stylevars>
+	<plugins>
+		<plugin active="1" executionorder="5">
+			<title>Cache Postbit Template</title>
+			<hookname>cache_templates</hookname>
+			<phpcode><![CDATA[if ((THIS_SCRIPT == 'showpost') OR (THIS_SCRIPT == 'private') OR (THIS_SCRIPT == 'announcement') OR (THIS_SCRIPT == 'memberlist') OR (THIS_SCRIPT == 'showthread'))
+{
+   $cache[] = 'postbit_other_usergroup_display';
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Inject CSS into vbulletin</title>
+			<hookname>css_start</hookname>
+			<phpcode><![CDATA[if(in_array('vbulletin.css',$matches[1]))
+{
+   $matches[1][] = 'other_usergroup_display.css';
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Display Other Usergroups</title>
+			<hookname>postbit_display_complete</hookname>
+			<phpcode><![CDATA[if($vbulletin->options['other_usergroup_display_type'] && $post['membergroupids']){
+	$groups = explode(',', $post['membergroupids']);
+	$groups []= $post['usergroupid'];
+	$unsetGroup = $post['displaygroupid'] == -1 ? $post['usergroupid'] : $post['displaygroupid'];
+	$groups = array_diff($groups, array($unsetGroup));
+
+	$displayType = $vbulletin->options['other_usergroup_display_type'];
+
+	if($displayType == 4){
+		$groupsToDisplay = explode(',', $vbulletin->options['other_usergroup_display_custom_group']);
+	}
+
+	($hook = vBulletinHook::fetch_hook('other_usergroup_display_start')) ? eval($hook) : false; 
+
+	foreach($groups as $group){
+		if($displayType == 1
+			|| ($displayType == 2 && $vbulletin->usergroupcache["$group"]['canoverride'] == 1)
+			|| ($displayType == 3 && $vbulletin->usergroupcache["$group"]['showgroup'] == 1)
+			|| ($displayType == 4 && in_array($group, $groupsToDisplay)))
+		{
+			$otherGroupInfo["$group"] = array(
+				'title' => $vbulletin->usergroupcache["$group"]['title'],
+				'description' => htmlspecialchars($vbulletin->usergroupcache["$group"]['description']),
+				'open_tag' => $vbulletin->usergroupcache["$group"]['opentag'],
+				'close_tag' =>  $vbulletin->usergroupcache["$group"]['closetag']
+			);
+		}
+	}
+
+	($hook = vBulletinHook::fetch_hook('other_usergroup_display_complete')) ? eval($hook) : false; 
+
+	if(count($otherGroupInfo) > 0){
+		$templater = vB_Template::create('postbit_other_usergroup_display');
+			$templater->register('other_usergroup_info', $otherGroupInfo);
+			$templater->register('postrank', $post['rank']);
+
+		$hookLocation = $vbulletin->options['other_usergroup_display_postbit_location'];
+		$template_hook["$hookLocation"] .= $templater->render();
+	}
+}]]></phpcode>
+		</plugin>
+	</plugins>
+	<phrases>
+		<phrasetype name="GLOBAL" fieldname="global">
+			<phrase name="do_not_show" date="1360794953" username="Squid" version="1.0"><![CDATA[Do Not Show Groups]]></phrase>
+			<phrase name="show_all_groups" date="1360795121" username="Squid" version="1.0"><![CDATA[Show All Groups]]></phrase>
+			<phrase name="show_custom_groups" date="1360794827" username="Squid" version="1.0"><![CDATA[Show Selected Groups]]></phrase>
+			<phrase name="show_leader_groups" date="1362329250" username="Squid" version="1.0"><![CDATA[Show Forum Leader Groups]]></phrase>
+			<phrase name="show_override_groups" date="1360794912" username="Squid" version="1.0"><![CDATA[Show Groups That Can Override]]></phrase>
+		</phrasetype>
+		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
+			<phrase name="setting_other_usergroup_display_custom_group_desc" date="1362327775" username="Squid" version="1.0"><![CDATA[A comma separated list of usergroup ids to be displayed in the postbit. (e.g. 5,7,13)
+
+Only valid if custom groups selected for which groups to display]]></phrase>
+			<phrase name="setting_other_usergroup_display_custom_group_title" date="1362327775" username="Squid" version="1.0"><![CDATA[Custom other usergroup list]]></phrase>
+			<phrase name="setting_other_usergroup_display_postbit_location_desc" date="1362327775" username="Squid" version="1.0"><![CDATA[The location in postbit to show the secondary usergroups.]]></phrase>
+			<phrase name="setting_other_usergroup_display_postbit_location_title" date="1362327775" username="Squid" version="1.0"><![CDATA[Location in postbit]]></phrase>
+			<phrase name="setting_other_usergroup_display_type_desc" date="1362327836" username="Squid" version="1.0"><![CDATA[Choose which other usergroups should be displayed.]]></phrase>
+			<phrase name="setting_other_usergroup_display_type_title" date="1362327836" username="Squid" version="1.0"><![CDATA[Choose which other usergroups to Display]]></phrase>
+			<phrase name="settinggroup_other_usergroup_display" date="1362327775" username="Squid" version="1.0"><![CDATA[Other Usergroup Display Settings]]></phrase>
+		</phrasetype>
+	</phrases>
+	<options>
+		<settinggroup name="other_usergroup_display" displayorder="6710">
+			<setting varname="other_usergroup_display_type" displayorder="10">
+				<datatype>free</datatype>
+				<optioncode>select:piped
+0|do_not_show
+1|show_all_groups
+2|show_override_groups
+3|show_leader_groups
+4|show_custom_groups</optioncode>
+				<defaultvalue>0</defaultvalue>
+			</setting>
+			<setting varname="other_usergroup_display_custom_group" displayorder="20">
+				<datatype>free</datatype>
+				<validationcode><![CDATA[return preg_match("/^(\d+(,\d+)*)?$/", $data) ? true : false;]]></validationcode>
+			</setting>
+			<setting varname="other_usergroup_display_postbit_location" displayorder="30">
+				<datatype>free</datatype>
+				<optioncode>select:piped
+postbit_userinfo_left|postbit_userinfo_left
+postbit_userinfo_right|postbit_userinfo_right
+postbit_userinfo_right_after_posts|postbit_userinfo_right_after_posts
+postbit_userinfo_left|postbit_userinfo_left
+postbit_signature_start|postbit_signature_start
+postbit_signature_end|postbit_signature_end</optioncode>
+				<defaultvalue>postbit_userinfo_left</defaultvalue>
+			</setting>
+		</settinggroup>
+	</options>
+	<helptopics>
+	</helptopics>
+	<cronentries>
+	</cronentries>
+	<faqentries>
+	</faqentries>
+	<navigation>
+	</navigation>
+</product>

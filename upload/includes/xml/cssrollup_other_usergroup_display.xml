@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<css product="other_usergroup_display">
+  <rollup name="main-rollup.css">
+    <template>other_usergroup_display.css</template>
+  </rollup>
+</css>
